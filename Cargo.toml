@@ -1,0 +1,26 @@
+[package]
+name = "relations"
+description = "Manage relations between objects"
+version = "1.0.0"
+authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
+edition = "2018"
+license = "MIT"
+homepage = "https://github.com/CanalTP/relations"
+repository = "https://github.com/CanalTP/relations"
+documentation = "https://docs.rs/relations"
+readme = "README.md"
+
+keywords = ["relation", "collection"]
+
+[workspace]
+members = [
+  "relations_procmacro",
+]
+
+[dependencies]
+derivative = "1"
+thiserror = "1"
+typed_index_collection = "1"
+
+[dev-dependencies]
+relations_procmacro = { version = "1", path = "./relations_procmacro/" }

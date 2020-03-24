@@ -1,0 +1,64 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  rustfmt:
+    name: Formatting check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+    - name: Run cargo fmt
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+  clippy:
+    name: Analyzing code with Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          profile: minimal
+          components: clippy
+    - name: Run cargo clippy
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: --workspace -- -D warnings
+
+  tests:
+    name: Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [stable, beta]
+        include:
+          - build: stable
+            os: ubuntu-latest
+            rust: stable
+          - build: beta
+            os: ubuntu-latest
+            rust: beta
+    steps:
+    - uses: actions/checkout@master
+    - name: Install Rust ${{ matrix.rust }}
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+    - name: Run tests
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --verbose --workspace

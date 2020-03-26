@@ -19,8 +19,9 @@ members = [
 
 [dependencies]
 derivative = "1"
+relations_procmacro = { version = "1", path = "./relations_procmacro/", optional = true }
 thiserror = "1"
 typed_index_collection = "1"
 
-[dev-dependencies]
-relations_procmacro = { version = "1", path = "./relations_procmacro/" }
+[features]
+default = ["relations_procmacro"]

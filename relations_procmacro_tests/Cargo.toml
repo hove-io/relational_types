@@ -1,0 +1,17 @@
+[package]
+name = "relations_procmacro_tests"
+version = "0.0.0"
+authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
+edition = "2018"
+publish = false
+autotests = false
+
+[dev-dependencies]
+pretty_assertions = "0.6"
+trybuild = "1"
+typed_index_collection = "1"
+relations = { version = "1", path = "../" }
+
+[[test]]
+name = "tests"
+path = "tests/tests.rs"

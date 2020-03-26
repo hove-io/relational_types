@@ -1,2 +1,2 @@
 # relations
-Modeling the relations between objects
+Modeling the relations between objects.

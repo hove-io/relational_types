@@ -15,6 +15,7 @@ keywords = ["relation", "collection"]
 [workspace]
 members = [
   "relations_procmacro",
+  "relations_procmacro_tests",
 ]
 
 [dependencies]

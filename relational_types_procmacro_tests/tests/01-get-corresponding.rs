@@ -1,6 +1,6 @@
 mod test_utils;
 
-use relations::*;
+use relational_types::*;
 use test_utils::*;
 use typed_index_collection::*;
 

@@ -1,11 +1,11 @@
 [package]
-name = "relations_procmacro"
+name = "relational_types_procmacro"
 description = "Procmacro to help create relations between objects"
 version = "1.0.0"
 authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
 edition = "2018"
 license = "MIT"
-repository = "https://github.com/CanalTP/relations"
+repository = "https://github.com/CanalTP/relational_types"
 keywords = ["macro", "floyd_marshall"]
 
 [lib]

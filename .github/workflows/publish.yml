@@ -20,12 +20,12 @@ jobs:
       with:
         command: login
         args: -- ${{ secrets.CARGO_TOKEN }}
-    - name: Publish relations_procmacro
+    - name: Publish relational_types_procmacro
       uses: actions-rs/cargo@v1
       with:
         command: publish
-        args: --manifest-path relations_procmacro/Cargo.toml
-    - name: Publish relations
+        args: --manifest-path relational_types_procmacro/Cargo.toml
+    - name: Publish relational_types
       uses: actions-rs/cargo@v1
       with:
         command: publish

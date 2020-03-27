@@ -1,4 +1,4 @@
-//! Custom derive for GetCorresponding.  See `relations` for the documentation.
+//! Custom derive for GetCorresponding.  See `relational_types` for the documentation.
 
 #![recursion_limit = "128"]
 

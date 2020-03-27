@@ -1,28 +1,28 @@
 [package]
-name = "relations"
+name = "relational_types"
 description = "Manage relations between objects"
 version = "1.0.0"
 authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
 edition = "2018"
 license = "MIT"
-homepage = "https://github.com/CanalTP/relations"
-repository = "https://github.com/CanalTP/relations"
-documentation = "https://docs.rs/relations"
+homepage = "https://github.com/CanalTP/relational_types"
+repository = "https://github.com/CanalTP/relational_types"
+documentation = "https://docs.rs/relational_types"
 readme = "README.md"
 
 keywords = ["relation", "collection"]
 
 [workspace]
 members = [
-  "relations_procmacro",
-  "relations_procmacro_tests",
+  "relational_types_procmacro",
+  "relational_types_procmacro_tests",
 ]
 
 [dependencies]
 derivative = "1"
-relations_procmacro = { version = "1", path = "./relations_procmacro/", optional = true }
+relational_types_procmacro = { version = "1", path = "./relational_types_procmacro/", optional = true }
 thiserror = "1"
 typed_index_collection = "1"
 
 [features]
-default = ["relations_procmacro"]
+default = ["relational_types_procmacro"]

@@ -1,7 +1,7 @@
 //! Modeling the relations between objects.
 //!
-//! By default, feature `relations_procmacro` is enabled, exposing macros to
-//! help build relations. See documentation of the crate `relations_procmacro`
+//! By default, feature `relational_types_procmacro` is enabled, exposing macros to
+//! help build relations. See documentation of the crate `relational_types_procmacro`
 //! for more information.
 //!
 //! This module defines types for modeling the relations between
@@ -21,8 +21,8 @@
 //! Let's defines these relations and use them a bit:
 //!
 //! ```no_run
-//! # use relations_procmacro::*;
-//! # use relations::*;
+//! # use relational_types_procmacro::*;
+//! # use relational_types::*;
 //! # use typed_index_collection::Idx;
 //! # struct Bike;
 //! # struct Brand;
@@ -94,8 +94,8 @@
 //! Let's implement that:
 //!
 //! ```
-//! # use relations_procmacro::*;
-//! # use relations::*;
+//! # use relational_types_procmacro::*;
+//! # use relational_types::*;
 //! # use typed_index_collection::Idx;
 //! # struct Bike;
 //! # struct Brand;
@@ -149,5 +149,5 @@ mod relations;
 
 pub use crate::error::*;
 pub use crate::relations::*;
-#[cfg(feature = "relations_procmacro")]
-pub use relations_procmacro::*;
+#[cfg(feature = "relational_types_procmacro")]
+pub use relational_types_procmacro::*;

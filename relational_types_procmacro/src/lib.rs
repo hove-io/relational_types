@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 //! Custom derive for GetCorresponding.  See `relational_types` for the documentation.
 
 #![recursion_limit = "128"]

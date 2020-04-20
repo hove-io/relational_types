@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 //! Modeling the relations between objects.
 //!
 //! By default, feature `relational_types_procmacro` is enabled, exposing macros to

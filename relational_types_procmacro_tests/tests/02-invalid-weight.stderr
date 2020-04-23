@@ -1,7 +1,7 @@
 error: proc-macro derive panicked
- --> $DIR/02-invalid-weight.rs:7:10
+ --> $DIR/02-invalid-weight.rs:6:10
   |
-7 | #[derive(GetCorresponding)]
+6 | #[derive(GetCorresponding)]
   |          ^^^^^^^^^^^^^^^^
   |
   = help: message: `weight` attribute must be convertible to f64: ParseFloatError { kind: Invalid }

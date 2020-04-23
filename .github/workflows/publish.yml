@@ -1,7 +1,7 @@
 name: Publish on crates.io
 on: 
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   publish:
@@ -21,11 +21,13 @@ jobs:
         command: login
         args: -- ${{ secrets.CARGO_TOKEN }}
     - name: Publish relational_types_procmacro
+      if: startsWith(github.ref, 'refs/tags/relational_types_procmacro-')
       uses: actions-rs/cargo@v1
       with:
         command: publish
         args: --manifest-path relational_types_procmacro/Cargo.toml
     - name: Publish relational_types
+      if: startsWith(github.ref, 'refs/tags/relational_types-')
       uses: actions-rs/cargo@v1
       with:
         command: publish

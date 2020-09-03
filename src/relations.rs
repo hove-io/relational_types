@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use typed_index_collection::{CollectionWithId, Id, Idx};
 
 /// The corresponding result type used by the crate.
-type Result<T> = std::result::Result<T, Error>;
+type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// A set of `Idx<T>`
 pub type IdxSet<T> = BTreeSet<Idx<T>>;

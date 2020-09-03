@@ -6,7 +6,6 @@
 
 extern crate proc_macro;
 use quote::*;
-use syn;
 
 use proc_macro::TokenStream;
 use std::collections::{HashMap, HashSet};

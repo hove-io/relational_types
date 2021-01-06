@@ -163,7 +163,7 @@ fn make_edge_to_get_corresponding<'a>(
     res
 }
 
-fn floyd_warshall<'a>(edges: &'a [Edge]) -> HashMap<(&'a Node, &'a Node), &'a Node> {
+fn floyd_warshall(edges: &[Edge]) -> HashMap<(&Node, &Node), &Node> {
     use std::f64::INFINITY;
     let mut v = HashSet::<&Node>::default();
     let mut dist = HashMap::<(&Node, &Node), f64>::default();

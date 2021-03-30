@@ -9,6 +9,27 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 /// A set of `Idx<T>`
 pub type IdxSet<T> = BTreeSet<Idx<T>>;
 
+#[macro_export]
+/// Creates an IdxSet
+///
+/// ```no_run
+/// # use relational_types::idx_set;
+/// # use typed_index_collection::Idx;
+/// struct Object;
+/// # fn get_object_idx() -> Idx<Object> { unimplemented!() }
+/// let idx: Idx<Object> = get_object_idx();
+/// let idx_set = idx_set![idx];
+/// ```
+macro_rules! idx_set {
+    ($($idx:expr),*) => {{
+        let mut idx_set = relational_types::IdxSet::default();
+        $(
+            idx_set.insert($idx);
+        )*
+        idx_set
+    }}
+}
+
 /// An object linking 2 types together.
 pub trait Relation {
     /// The type of the source object
@@ -62,6 +83,7 @@ where
                 .ok_or_else(|| Error::IdentifierNotFound(one_id.to_owned(), rel_name.to_owned()))?;
             many_to_one.insert(many_idx, one_idx);
             one_to_many
+                // First remove existing relation for 'to' if it's not related to 'from'
                 .entry(one_idx)
                 .or_insert_with(IdxSet::default)
                 .insert(many_idx);
@@ -70,6 +92,128 @@ where
             one_to_many,
             many_to_one,
         })
+        // Then add the new relation
+    }
+
+    /// Add a new link between a 'from' object and 'to' object.
+    ///
+    /// ```
+    /// # use relational_types::{idx_set, IdxSet, OneToMany, Relation};
+    /// # use typed_index_collection::{CollectionWithId, Id};
+    /// # #[derive(Debug)]
+    /// # struct Brand {
+    /// #     id: String,
+    /// # }
+    /// # impl Id<Brand> for Brand {
+    /// #     fn id(&self) -> &str { self.id.as_str() }
+    /// #     fn set_id(&mut self, id: String) { unimplemented!() }
+    /// # }
+    /// # #[derive(Debug)]
+    /// # struct Bike {
+    /// #     id: String,
+    /// #     brand_id: String,
+    /// # }
+    /// # impl Id<Bike> for Bike {
+    /// #     fn id(&self) -> &str { self.id.as_str() }
+    /// #     fn set_id(&mut self, id: String) { unimplemented!() }
+    /// # }
+    /// # impl Id<Brand> for Bike {
+    /// #     fn id(&self) -> &str { self.brand_id.as_str() }
+    /// #     fn set_id(&mut self, id: String) { unimplemented!() }
+    /// # }
+    /// // Build the relation
+    /// let mut brands = CollectionWithId::default();
+    /// let biky_idx = brands.push(Brand {
+    ///     id: "biky".to_string(),
+    /// }).unwrap();
+    /// let mut bikes = CollectionWithId::default();
+    /// let loulou_idx = bikes.push(Bike {
+    ///     id: "loulou".to_string(),
+    ///     brand_id: "biky".to_string(),
+    /// }).unwrap();
+    /// let mut relation = OneToMany::new(&brands, &bikes, "brands_to_bikes").unwrap();
+    ///
+    /// // Add a new bike to the relation
+    /// let fifi_idx = bikes.push(Bike {
+    ///     id: "fifi".to_string(),
+    ///     brand_id: "biky".to_string(),
+    /// }).unwrap();
+    /// relation.add_link(biky_idx, fifi_idx);
+    ///
+    /// // Assert the new relation has been updated
+    /// assert_eq!(
+    ///     relation.get_corresponding_forward(&idx_set![biky_idx]),
+    ///     idx_set![loulou_idx, fifi_idx],
+    /// );
+    /// assert_eq!(
+    ///     relation.get_corresponding_backward(&idx_set![fifi_idx]),
+    ///     idx_set![biky_idx],
+    /// );
+    ///
+    /// // Add a new brand/bike to the relation
+    /// let biclou_idx = brands.push(Brand {
+    ///     id: "biclou".to_string()
+    /// }).unwrap();
+    /// let riri_idx = bikes.push(Bike {
+    ///     id: "riri".to_string(),
+    ///     brand_id: "biclou".to_string(),
+    /// }).unwrap();
+    /// relation.add_link(biclou_idx, riri_idx);
+    ///
+    /// // Assert the new relation has been updated
+    /// assert_eq!(
+    ///     relation.get_corresponding_forward(&idx_set![biclou_idx]),
+    ///     idx_set![riri_idx],
+    /// );
+    /// assert_eq!(
+    ///     relation.get_corresponding_backward(&idx_set![riri_idx]),
+    ///     idx_set![biclou_idx],
+    /// );
+    ///
+    /// // Change an existing relation (fifi was a biky)
+    /// relation.add_link(biclou_idx, fifi_idx);
+    ///
+    /// // Assert the new relations
+    /// assert_eq!(
+    ///     relation.get_corresponding_forward(&idx_set![biclou_idx]),
+    ///     idx_set![fifi_idx, riri_idx],
+    /// );
+    /// assert_eq!(
+    ///     relation.get_corresponding_backward(&idx_set![fifi_idx]),
+    ///     idx_set![biclou_idx],
+    /// );
+    /// // Assert other relations are also updated (fifi is not in biky anymore)
+    /// assert_eq!(
+    ///     relation.get_corresponding_forward(&idx_set![biky_idx]),
+    ///     idx_set![loulou_idx],
+    /// );
+    /// assert_eq!(
+    ///     relation.get_corresponding_backward(&idx_set![loulou_idx]),
+    ///     idx_set![biky_idx],
+    /// );
+    /// ```
+    ///
+    /// # Important
+    ///
+    /// The caller need to ensure that the object referenced by `Idx<U>`
+    /// has a real relation with the object referenced by `Idx<T>`.
+    /// If not, then `Relation` might return Undefined Behavior.
+    pub fn add_link(&mut self, from: Idx<T>, to: Idx<U>) {
+        // First remove existing relation for 'to' if it's not related to 'from'
+        if let Some(existing_from_idx) = self.many_to_one.get(&to).copied() {
+            if existing_from_idx != from {
+                self.many_to_one.remove_entry(&to);
+                self.one_to_many.entry(existing_from_idx).and_modify(|set| {
+                    set.remove(&to);
+                });
+            }
+        }
+        // Then add the new relation
+        self.one_to_many
+            .entry(from)
+            .or_insert_with(IdxSet::default)
+            .insert(to);
+        self.many_to_one.insert(to, from);
     }
 }
 

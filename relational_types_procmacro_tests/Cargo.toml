@@ -9,8 +9,8 @@ autotests = false
 [dev-dependencies]
 pretty_assertions = "0.6"
 trybuild = "1"
-typed_index_collection = "1"
-relational_types = { version = "1", path = "../" }
+typed_index_collection = "2"
+relational_types = { version = "2", path = "../" }
 
 [[test]]
 name = "tests"

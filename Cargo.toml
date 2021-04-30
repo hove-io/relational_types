@@ -1,7 +1,7 @@
 [package]
 name = "relational_types"
 description = "Manage relations between objects"
-version = "1.1.0"
+version = "2.0.0"
 authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
 edition = "2018"
 license = "MIT"
@@ -20,9 +20,9 @@ members = [
 
 [dependencies]
 derivative = "1"
-relational_types_procmacro = { version = "1", path = "./relational_types_procmacro/", optional = true }
+relational_types_procmacro = { version = "2", path = "./relational_types_procmacro/", optional = true }
 thiserror = "1"
-typed_index_collection = "1"
+typed_index_collection = "2"
 
 [features]
 default = ["relational_types_procmacro"]

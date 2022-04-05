@@ -5,8 +5,8 @@ version = "2.0.0"
 authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
 edition = "2018"
 license = "MIT"
-homepage = "https://github.com/CanalTP/relational_types"
-repository = "https://github.com/CanalTP/relational_types"
+homepage = "https://github.com/hove-io/relational_types"
+repository = "https://github.com/hove-io/relational_types"
 documentation = "https://docs.rs/relational_types"
 readme = "README.md"
 

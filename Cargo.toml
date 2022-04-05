@@ -2,7 +2,7 @@
 name = "relational_types"
 description = "Manage relations between objects"
 version = "2.0.0"
-authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
+authors = ["Hove <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
 edition = "2018"
 license = "MIT"
 homepage = "https://github.com/hove-io/relational_types"

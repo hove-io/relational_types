@@ -38,23 +38,13 @@ jobs:
 
   tests:
     name: Tests
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        build: [stable, beta]
-        include:
-          - build: stable
-            os: ubuntu-latest
-            rust: stable
-          - build: beta
-            os: ubuntu-latest
-            rust: beta
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Install Rust ${{ matrix.rust }}
+    - name: Install Rust stable
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           profile: minimal
           override: true
     - name: Run tests

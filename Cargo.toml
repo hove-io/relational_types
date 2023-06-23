@@ -22,7 +22,7 @@ members = [
 derivative = "1"
 relational_types_procmacro = { version = "2", path = "./relational_types_procmacro/", optional = true }
 thiserror = "1"
-typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", version = "2"}
+typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", tag = "v2"}
 
 [features]
 default = ["relational_types_procmacro"]

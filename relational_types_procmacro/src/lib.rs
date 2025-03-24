@@ -96,7 +96,7 @@ fn to_edge(field: &syn::Field) -> Option<Edge> {
         None
     }?;
     let (from_ty, to_ty) = if let AngleBracketed(ref data) = segment.parameters {
-        match (data.types.get(0), data.types.get(1), data.types.get(2)) {
+        match (data.types.first(), data.types.get(1), data.types.get(2)) {
             (Some(from_ty), Some(to_ty), None) => Some((from_ty, to_ty)),
             _ => None,
         }
@@ -164,7 +164,6 @@ fn make_edge_to_get_corresponding<'a>(
 }
 
 fn floyd_warshall(edges: &[Edge]) -> HashMap<(&Node, &Node), &Node> {
-    use std::f64::INFINITY;
     let mut v = HashSet::<&Node>::default();
     let mut dist = HashMap::<(&Node, &Node), f64>::default();
     let mut next = HashMap::default();
@@ -189,7 +188,7 @@ fn floyd_warshall(edges: &[Edge]) -> HashMap<(&Node, &Node), &Node> {
                     Some(d) => *d,
                     None => continue,
                 };
-                let dist_ij = dist.entry((i, j)).or_insert(INFINITY);
+                let dist_ij = dist.entry((i, j)).or_insert(f64::INFINITY);
                 if *dist_ij > dist_ik + dist_kj {
                     *dist_ij = dist_ik + dist_kj;
                     let next_ik = next[&(i, k)];

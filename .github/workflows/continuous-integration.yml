@@ -7,48 +7,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Install Rust stable
-      uses: actions-rs/toolchain@v1
+    - name: Install rust toolchain
+      uses: dtolnay/rust-toolchain@stable
       with:
-          toolchain: stable
-          profile: minimal
-          components: rustfmt
+        toolchain: stable
+        components: cargo, rustfmt
     - name: Run cargo fmt
-      uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --all -- --check
+      run: |
+        cargo fmt --all -- --check --color always
 
   clippy:
     name: Analyzing code with Clippy
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Install Rust stable
-      uses: actions-rs/toolchain@v1
+    - name: Install rust toolchain
+      uses: dtolnay/rust-toolchain@stable
       with:
-          toolchain: stable
-          profile: minimal
-          components: clippy
+        toolchain: stable
+        components: cargo, clippy
     - name: Run cargo clippy
-      uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-        args: --workspace -- -D warnings
+      run: |
+        cargo clippy --all-targets --all-features --workspace -- -D warnings
 
   tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Install Rust stable
-      uses: actions-rs/toolchain@v1
+    - name: Install rust toolchain
+      uses: dtolnay/rust-toolchain@stable
       with:
-          toolchain: stable
-          profile: minimal
-          override: true
-    - name: Run tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --verbose --workspace
+        toolchain: stable
+        components: cargo
+    - name: Run cargo test
+      run: |
+        cargo test --verbose --workspace

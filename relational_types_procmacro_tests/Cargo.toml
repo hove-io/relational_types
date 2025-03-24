@@ -7,9 +7,9 @@ publish = false
 autotests = false
 
 [dev-dependencies]
-pretty_assertions = "0.6"
+pretty_assertions = "1.4"
 trybuild = "1"
-typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", tag = "v2"}
+typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", tag = "v2.3.0"}
 relational_types = { version = "2", path = "../" }
 
 [[test]]

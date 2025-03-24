@@ -2,7 +2,7 @@ mod test_utils;
 
 use relational_types::*;
 use test_utils::*;
-use typed_index_collection::*;
+use typed_index_collection::collection::*;
 
 #[derive(GetCorresponding)]
 pub struct Model {

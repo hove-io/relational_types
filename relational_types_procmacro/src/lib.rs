@@ -9,16 +9,17 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
 use std::collections::{HashMap, HashSet};
-use syn::{parse_macro_input, Data, DeriveInput, Fields, GenericArgument, PathArguments, Type};
+use syn::{Data, DeriveInput, Fields, GenericArgument, PathArguments, Type, parse_macro_input};
 
 /// Generation of the `GetCorresponding` trait implementation.
 #[proc_macro_derive(GetCorresponding, attributes(get_corresponding))]
 pub fn get_corresponding(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    match impl_get_corresponding(&ast) {
+    let result = match impl_get_corresponding(&ast) {
         Ok(ts) => ts.into(),
         Err(e) => e.into_compile_error().into(),
-    }
+    };
+    result
 }
 
 fn impl_get_corresponding(ast: &DeriveInput) -> syn::Result<TokenStream2> {
@@ -108,7 +109,7 @@ fn to_edge(field: &syn::Field) -> syn::Result<Option<Edge>> {
             .args
             .iter()
             .filter_map(|arg| {
-                if let GenericArgument::Type(ref ty) = arg {
+                if let GenericArgument::Type(ty) = arg {
                     Some(ty)
                 } else {
                     None

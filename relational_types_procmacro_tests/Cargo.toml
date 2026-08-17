@@ -2,12 +2,12 @@
 name = "relational_types_procmacro_tests"
 version = "0.0.0"
 authors = ["Kisio Digital <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
-edition = "2018"
+edition = "2024"
 publish = false
 autotests = false
 
 [dev-dependencies]
-pretty_assertions = "0.6"
+pretty_assertions = "1"
 trybuild = "1"
 typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", tag = "v2"}
 relational_types = { version = "2", path = "../" }

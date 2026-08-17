@@ -1,5 +1,4 @@
 use crate::Error;
-use derivative::Derivative;
 use std::collections::{BTreeMap, BTreeSet};
 use typed_index_collection::{CollectionWithId, Id, Idx};
 
@@ -34,11 +33,19 @@ pub trait Relation {
 
 /// A one to many relation, i.e. to one `T` corresponds many `U`,
 /// and a `U` has one corresponding `T`.
-#[derive(Derivative, Debug)]
-#[derivative(Default(bound = ""))]
+#[derive(Debug)]
 pub struct OneToMany<T, U> {
     one_to_many: BTreeMap<Idx<T>, IdxSet<U>>,
     many_to_one: BTreeMap<Idx<U>, Idx<T>>,
+}
+
+impl<T, U> Default for OneToMany<T, U> {
+    fn default() -> Self {
+        OneToMany {
+            one_to_many: BTreeMap::default(),
+            many_to_one: BTreeMap::default(),
+        }
+    }
 }
 
 impl<T, U> OneToMany<T, U>

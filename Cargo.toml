@@ -1,9 +1,9 @@
 [package]
 name = "relational_types"
 description = "Manage relations between objects"
-version = "2.1.0"
+version = "2.1.1"
 authors = ["Hove <team.coretools@kisio.org>", "Guillaume Pinot <texitoi@texitoi.eu>"]
-edition = "2018"
+edition = "2024"
 license = "MIT"
 homepage = "https://github.com/hove-io/relational_types"
 repository = "https://github.com/hove-io/relational_types"
@@ -19,9 +19,8 @@ members = [
 ]
 
 [dependencies]
-derivative = "1"
 relational_types_procmacro = { version = "2", path = "./relational_types_procmacro/", optional = true }
-thiserror = "1"
+thiserror = "2"
 typed_index_collection = { git = "https://github.com/hove-io/typed_index_collection", tag = "v2"}
 
 [features]

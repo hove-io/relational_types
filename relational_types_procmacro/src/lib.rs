@@ -15,73 +15,73 @@ use syn::{Data, DeriveInput, Fields, GenericArgument, PathArguments, Type, parse
 #[proc_macro_derive(GetCorresponding, attributes(get_corresponding))]
 pub fn get_corresponding(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let result = match impl_get_corresponding(&ast) {
+
+    match impl_get_corresponding(&ast) {
         Ok(ts) => ts.into(),
         Err(e) => e.into_compile_error().into(),
-    };
-    result
+    }
 }
 
 fn impl_get_corresponding(ast: &DeriveInput) -> syn::Result<TokenStream2> {
-    if let Data::Struct(ref data_struct) = ast.data {
-        if let Fields::Named(ref named_fields) = data_struct.fields {
-            let name = &ast.ident;
-            let edges: Vec<_> = named_fields
-                .named
-                .iter()
-                .filter_map(|f| to_edge(f).transpose())
-                .collect::<syn::Result<_>>()?;
-            let next = floyd_warshall(&edges);
-            let edge_to_impl = make_edge_to_get_corresponding(name, &edges);
-            let edges_impls = next.iter().map(|(&(from, to), &node)| {
-                if from == to {
-                    quote! {
-                        impl GetCorresponding<#to> for IdxSet<#from> {
-                            fn get_corresponding(&self, _: &#name) -> IdxSet<#to> {
-                                self.clone()
-                            }
-                        }
-                    }
-                } else if to == node {
-                    edge_to_impl[&(from, to)].clone()
-                } else {
-                    quote! {
-                        impl GetCorresponding<#to> for IdxSet<#from> {
-                            fn get_corresponding(&self, pt_objects: &#name) -> IdxSet<#to> {
-                                let tmp: IdxSet<#node> = self.get_corresponding(pt_objects);
-                                tmp.get_corresponding(pt_objects)
-                            }
+    if let Data::Struct(ref data_struct) = ast.data
+        && let Fields::Named(ref named_fields) = data_struct.fields
+    {
+        let name = &ast.ident;
+        let edges: Vec<_> = named_fields
+            .named
+            .iter()
+            .filter_map(|f| to_edge(f).transpose())
+            .collect::<syn::Result<_>>()?;
+        let next = floyd_warshall(&edges);
+        let edge_to_impl = make_edge_to_get_corresponding(name, &edges);
+        let edges_impls = next.iter().map(|(&(from, to), &node)| {
+            if from == to {
+                quote! {
+                    impl GetCorresponding<#to> for IdxSet<#from> {
+                        fn get_corresponding(&self, _: &#name) -> IdxSet<#to> {
+                            self.clone()
                         }
                     }
                 }
-            });
-            return Ok(quote! {
-                /// A trait that returns a set of objects corresponding to
-                /// a given type.
-                pub trait GetCorresponding<T: Sized> {
-                    /// For the given self, returns the set of
-                    /// corresponding `T` indices.
-                    fn get_corresponding(&self, model: &#name) -> IdxSet<T>;
-                }
-                impl #name {
-                    /// Returns the set of `U` indices corresponding to the `from` set.
-                    pub fn get_corresponding<T, U>(&self, from: &IdxSet<T>) -> IdxSet<U>
-                    where
-                        IdxSet<T>: GetCorresponding<U>
-                    {
-                        from.get_corresponding(self)
-                    }
-                    /// Returns the set of `U` indices corresponding to the `from` index.
-                    pub fn get_corresponding_from_idx<T, U>(&self, from: Idx<T>) -> IdxSet<U>
-                    where
-                        IdxSet<T>: GetCorresponding<U>
-                    {
-                        self.get_corresponding(&Some(from).into_iter().collect())
+            } else if to == node {
+                edge_to_impl[&(from, to)].clone()
+            } else {
+                quote! {
+                    impl GetCorresponding<#to> for IdxSet<#from> {
+                        fn get_corresponding(&self, pt_objects: &#name) -> IdxSet<#to> {
+                            let tmp: IdxSet<#node> = self.get_corresponding(pt_objects);
+                            tmp.get_corresponding(pt_objects)
+                        }
                     }
                 }
-                #(#edges_impls)*
-            });
-        }
+            }
+        });
+        return Ok(quote! {
+            /// A trait that returns a set of objects corresponding to
+            /// a given type.
+            pub trait GetCorresponding<T: Sized> {
+                /// For the given self, returns the set of
+                /// corresponding `T` indices.
+                fn get_corresponding(&self, model: &#name) -> IdxSet<T>;
+            }
+            impl #name {
+                /// Returns the set of `U` indices corresponding to the `from` set.
+                pub fn get_corresponding<T, U>(&self, from: &IdxSet<T>) -> IdxSet<U>
+                where
+                    IdxSet<T>: GetCorresponding<U>
+                {
+                    from.get_corresponding(self)
+                }
+                /// Returns the set of `U` indices corresponding to the `from` index.
+                pub fn get_corresponding_from_idx<T, U>(&self, from: Idx<T>) -> IdxSet<U>
+                where
+                    IdxSet<T>: GetCorresponding<U>
+                {
+                    self.get_corresponding(&Some(from).into_iter().collect())
+                }
+            }
+            #(#edges_impls)*
+        });
     }
     Ok(quote!())
 }
@@ -190,7 +190,6 @@ fn make_edge_to_get_corresponding<'a>(
 }
 
 fn floyd_warshall(edges: &[Edge]) -> HashMap<(&Node, &Node), &Node> {
-    use std::f64::INFINITY;
     let mut v = HashSet::<&Node>::default();
     let mut dist = HashMap::<(&Node, &Node), f64>::default();
     let mut next = HashMap::default();
@@ -215,7 +214,7 @@ fn floyd_warshall(edges: &[Edge]) -> HashMap<(&Node, &Node), &Node> {
                     Some(d) => *d,
                     None => continue,
                 };
-                let dist_ij = dist.entry((i, j)).or_insert(INFINITY);
+                let dist_ij = dist.entry((i, j)).or_insert(f64::INFINITY);
                 if *dist_ij > dist_ik + dist_kj {
                     *dist_ij = dist_ik + dist_kj;
                     let next_ik = next[&(i, k)];

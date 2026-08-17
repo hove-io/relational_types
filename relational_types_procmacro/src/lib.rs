@@ -5,138 +5,163 @@
 #![recursion_limit = "128"]
 
 extern crate proc_macro;
-use quote::*;
-
 use proc_macro::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
+use quote::quote;
 use std::collections::{HashMap, HashSet};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, GenericArgument, PathArguments, Type};
 
 /// Generation of the `GetCorresponding` trait implementation.
 #[proc_macro_derive(GetCorresponding, attributes(get_corresponding))]
 pub fn get_corresponding(input: TokenStream) -> TokenStream {
-    let s = input.to_string();
-    let ast = syn::parse_derive_input(&s).unwrap();
-    let gen = impl_get_corresponding(&ast);
-    gen.parse().unwrap()
+    let ast = parse_macro_input!(input as DeriveInput);
+    match impl_get_corresponding(&ast) {
+        Ok(ts) => ts.into(),
+        Err(e) => e.into_compile_error().into(),
+    }
 }
 
-fn impl_get_corresponding(ast: &syn::DeriveInput) -> quote::Tokens {
-    if let syn::Body::Struct(syn::VariantData::Struct(ref fields)) = ast.body {
-        let name = &ast.ident;
-        let edges: Vec<_> = fields.iter().filter_map(to_edge).collect();
-        let next = floyd_warshall(&edges);
-        let edge_to_impl = make_edge_to_get_corresponding(name, &edges);
-        let edges_impls = next.iter().map(|(&(from, to), &node)| {
-            if from == to {
-                quote! {
-                    impl GetCorresponding<#to> for IdxSet<#from> {
-                        fn get_corresponding(&self, _: &#name) -> IdxSet<#to> {
-                            self.clone()
+fn impl_get_corresponding(ast: &DeriveInput) -> syn::Result<TokenStream2> {
+    if let Data::Struct(ref data_struct) = ast.data {
+        if let Fields::Named(ref named_fields) = data_struct.fields {
+            let name = &ast.ident;
+            let edges: Vec<_> = named_fields
+                .named
+                .iter()
+                .filter_map(|f| to_edge(f).transpose())
+                .collect::<syn::Result<_>>()?;
+            let next = floyd_warshall(&edges);
+            let edge_to_impl = make_edge_to_get_corresponding(name, &edges);
+            let edges_impls = next.iter().map(|(&(from, to), &node)| {
+                if from == to {
+                    quote! {
+                        impl GetCorresponding<#to> for IdxSet<#from> {
+                            fn get_corresponding(&self, _: &#name) -> IdxSet<#to> {
+                                self.clone()
+                            }
+                        }
+                    }
+                } else if to == node {
+                    edge_to_impl[&(from, to)].clone()
+                } else {
+                    quote! {
+                        impl GetCorresponding<#to> for IdxSet<#from> {
+                            fn get_corresponding(&self, pt_objects: &#name) -> IdxSet<#to> {
+                                let tmp: IdxSet<#node> = self.get_corresponding(pt_objects);
+                                tmp.get_corresponding(pt_objects)
+                            }
                         }
                     }
                 }
-            } else if to == node {
-                edge_to_impl[&(from, to)].clone()
-            } else {
-                quote! {
-                    impl GetCorresponding<#to> for IdxSet<#from> {
-                        fn get_corresponding(&self, pt_objects: &#name) -> IdxSet<#to> {
-                            let tmp: IdxSet<#node> = self.get_corresponding(pt_objects);
-                            tmp.get_corresponding(pt_objects)
-                        }
+            });
+            return Ok(quote! {
+                /// A trait that returns a set of objects corresponding to
+                /// a given type.
+                pub trait GetCorresponding<T: Sized> {
+                    /// For the given self, returns the set of
+                    /// corresponding `T` indices.
+                    fn get_corresponding(&self, model: &#name) -> IdxSet<T>;
+                }
+                impl #name {
+                    /// Returns the set of `U` indices corresponding to the `from` set.
+                    pub fn get_corresponding<T, U>(&self, from: &IdxSet<T>) -> IdxSet<U>
+                    where
+                        IdxSet<T>: GetCorresponding<U>
+                    {
+                        from.get_corresponding(self)
+                    }
+                    /// Returns the set of `U` indices corresponding to the `from` index.
+                    pub fn get_corresponding_from_idx<T, U>(&self, from: Idx<T>) -> IdxSet<U>
+                    where
+                        IdxSet<T>: GetCorresponding<U>
+                    {
+                        self.get_corresponding(&Some(from).into_iter().collect())
                     }
                 }
-            }
-        });
-        quote! {
-            /// A trait that returns a set of objects corresponding to
-            /// a given type.
-            pub trait GetCorresponding<T: Sized> {
-                /// For the given self, returns the set of
-                /// corresponding `T` indices.
-                fn get_corresponding(&self, model: &#name) -> IdxSet<T>;
-            }
-            impl #name {
-                /// Returns the set of `U` indices corresponding to the `from` set.
-                pub fn get_corresponding<T, U>(&self, from: &IdxSet<T>) -> IdxSet<U>
-                where
-                    IdxSet<T>: GetCorresponding<U>
-                {
-                    from.get_corresponding(self)
-                }
-                /// Returns the set of `U` indices corresponding to the `from` index.
-                pub fn get_corresponding_from_idx<T, U>(&self, from: Idx<T>) -> IdxSet<U>
-                where
-                    IdxSet<T>: GetCorresponding<U>
-                {
-                    self.get_corresponding(&Some(from).into_iter().collect())
-                }
-            }
-            #(#edges_impls)*
+                #(#edges_impls)*
+            });
         }
-    } else {
-        quote!()
     }
+    Ok(quote!())
 }
 
-fn to_edge(field: &syn::Field) -> Option<Edge> {
-    use syn::MetaItem::*;
-    use syn::NestedMetaItem::MetaItem;
-    use syn::PathParameters::AngleBracketed;
-
-    let ident = field.ident.as_ref()?.as_ref();
-    let mut split = ident.split("_to_");
-    let _from_collection = split.next()?;
-    let _to_collection = split.next()?;
-    if split.next().is_some() {
-        return None;
+fn to_edge(field: &syn::Field) -> syn::Result<Option<Edge>> {
+    let ident_str = match field.ident.as_ref() {
+        Some(i) => i.to_string(),
+        None => return Ok(None),
+    };
+    let parts: Vec<&str> = ident_str.split("_to_").collect();
+    if parts.len() != 2 {
+        return Ok(None);
     }
-    let segment = if let syn::Ty::Path(_, ref path) = field.ty {
-        path.segments.last()
+    let segment = if let Type::Path(ref type_path) = field.ty {
+        type_path.path.segments.last()
     } else {
         None
-    }?;
-    let (from_ty, to_ty) = if let AngleBracketed(ref data) = segment.parameters {
-        match (data.types.get(0), data.types.get(1), data.types.get(2)) {
-            (Some(from_ty), Some(to_ty), None) => Some((from_ty, to_ty)),
+    };
+    let segment = match segment {
+        Some(s) => s,
+        None => return Ok(None),
+    };
+    let type_args = if let PathArguments::AngleBracketed(ref data) = segment.arguments {
+        let types: Vec<&Type> = data
+            .args
+            .iter()
+            .filter_map(|arg| {
+                if let GenericArgument::Type(ref ty) = arg {
+                    Some(ty)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        match types.as_slice() {
+            [from_ty, to_ty] => Some((*from_ty, *to_ty)),
             _ => None,
         }
     } else {
         None
-    }?;
-    let weight = field
-        .attrs
-        .iter()
-        .flat_map(|attr| match attr.value {
-            List(ref i, ref v) if i == "get_corresponding" => v.as_slice(),
-            _ => &[],
-        })
-        .map(|mi| match *mi {
-            MetaItem(NameValue(ref i, syn::Lit::Str(ref l, _))) => {
-                assert_eq!(i, "weight", "{} is not a valid attribute", i);
-                l.parse::<f64>()
-                    .expect("`weight` attribute must be convertible to f64")
-            }
-            _ => panic!("Only `key = \"value\"` attributes supported."),
-        })
-        .last()
-        .unwrap_or(1.);
+    };
+    let (from_ty, to_ty) = match type_args {
+        Some(pair) => pair,
+        None => return Ok(None),
+    };
 
-    Edge {
-        ident: ident.into(),
+    let mut weight = 1.0f64;
+    for attr in &field.attrs {
+        if attr.path().is_ident("get_corresponding") {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("weight") {
+                    let value = meta.value()?;
+                    let s: syn::LitStr = value.parse()?;
+                    weight = s.value().parse::<f64>().map_err(|e| {
+                        meta.error(format!(
+                            "`weight` attribute must be convertible to f64: {e}"
+                        ))
+                    })?;
+                    Ok(())
+                } else {
+                    Err(meta.error("Only `key = \"value\"` attributes supported."))
+                }
+            })?;
+        }
+    }
+
+    Ok(Some(Edge {
+        ident: ident_str,
         from: from_ty.clone(),
         to: to_ty.clone(),
         weight,
-    }
-    .into()
+    }))
 }
 
 fn make_edge_to_get_corresponding<'a>(
     name: &syn::Ident,
     edges: &'a [Edge],
-) -> HashMap<(&'a syn::Ty, &'a syn::Ty), quote::Tokens> {
+) -> HashMap<(&'a Type, &'a Type), TokenStream2> {
     let mut res = HashMap::default();
     for e in edges {
-        let ident: quote::Ident = e.ident.as_str().into();
+        let ident = Ident::new(&e.ident, Span::call_site());
         let from = &e.from;
         let to = &e.to;
         res.insert(
@@ -208,4 +233,4 @@ struct Edge {
     weight: f64,
 }
 
-type Node = syn::Ty;
+type Node = Type;
